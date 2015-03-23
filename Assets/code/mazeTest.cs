@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class mazeTest : MonoBehaviour {
 
+	int foo;
 	public GameObject wallprefab;
 	// Use this for initialization
 	void Start () {
