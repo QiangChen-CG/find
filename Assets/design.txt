@@ -1,0 +1,8 @@
+
+Levelroot y = 0.82
+
+start,goal y = -1.23
+
+wall y = -1
+
+item food y = -0.41;
