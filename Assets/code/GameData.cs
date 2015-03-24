@@ -120,7 +120,6 @@ public class GameData : MonoBehaviour {
 		{
 			StartCoroutine("HideCurrentLevel");
 		}
-
 		StartCoroutine("ShowNewLevel");
 
 	}
