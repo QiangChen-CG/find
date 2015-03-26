@@ -251,6 +251,116 @@ public class StepChar : MonoBehaviour {
 		}
 	}
 	
+	void HandleTouchInputSmart()
+	{
+		Vector2 screenCharPos = Camera.main.WorldToScreenPoint(transform.position);
+		
+		Vector2 touchpos = screenCharPos;
+		bool gettouch = false;
+		#if UNITY_WEBPLAYER
+		if (Input.GetMouseButtonDown(0))
+		{
+			touchpos = Input.mousePosition;
+			gettouch = true;
+		}
+		#else		
+		if (Input.touchCount > 0)
+		{
+			Touch t = Input.GetTouch(0);
+			if (t.phase == TouchPhase.Began)
+			{
+				touchpos = t.position;
+				gettouch = true;
+			}
+		}
+		#endif
+		if (gettouch)
+		{
+			Vector2 dir = touchpos - screenCharPos;
+			dir.Normalize();
+			
+			float du = Vector3.Dot(dir, Vector2.up);
+			float dr = Vector3.Dot(dir, Vector2.right);
+			
+			//上.
+			if (du >= 0)
+			{
+				//右.
+				if (dr >= 0)
+				{
+					if (canWalkForward)
+					{
+						MoveValue(transform.forward);
+					}
+					else if (canWalkRight)
+					{
+						MoveValue(transform.right);
+					}
+					else if (canWalkLeft)
+					{			
+						MoveValue(-transform.right);
+					}
+				}
+				else
+				{
+					//左.
+					if (canWalkLeft)
+					{			
+						MoveValue(-transform.right);
+					}
+					else if (canWalkBack)
+					{			
+						MoveValue(-transform.forward);
+					}
+					else if (canWalkForward)
+					{
+						MoveValue(transform.forward);
+					}
+					
+				}
+			}
+			else
+			{
+				//下.
+				//右.
+				if (dr >= 0)
+				{
+					if (canWalkRight)
+					{
+						MoveValue(transform.right);
+					}
+					else if (canWalkForward)
+					{
+						MoveValue(transform.forward);
+					}							
+					else if (canWalkBack)
+					{
+						MoveValue(-transform.forward);
+					}		
+				}
+				else
+				{
+					//左.						
+					if (canWalkBack)
+					{
+						MoveValue(-transform.forward);
+					}
+					else if (canWalkLeft)
+					{			
+						MoveValue(-transform.right);
+					}
+					else if (canWalkRight)
+					{
+						MoveValue(transform.right);
+					}
+					
+				}
+				
+			}
+			
+		}
+	}
+
 	
 
 	void HandleTouchInput()
@@ -331,9 +441,6 @@ public class StepChar : MonoBehaviour {
 			}
 			
 		}
-
-
-
 	}
 
 	// Update is called once per frame
@@ -344,7 +451,8 @@ public class StepChar : MonoBehaviour {
 			float deltatime = arcGamePlayTimeMgr.GetDeltaTime("player");
 			FindWay();
 			//HandleTouchInput();
-			HandleToucehDragInput();
+			//HandleToucehDragInput();
+			HandleTouchInputSmart();
 			HandleKeyCtrl(deltatime);
 		}
 

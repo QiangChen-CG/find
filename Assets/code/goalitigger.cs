@@ -8,7 +8,10 @@ public class goalitigger : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 	
-		anim.Play("goalidle");
+		if (anim != null)
+		{
+			anim.Play("goalidle");
+		}
 	}
 	
 	// Update is called once per frame
@@ -21,7 +24,10 @@ public class goalitigger : MonoBehaviour {
 	{
 		if (other.tag == "player")
 		{
-			anim.Play("goalon");
+			if (anim != null)
+			{
+				anim.Play("goalon");
+			}
 			StartCoroutine("waitAnimAndLoadNextLevel");
 		}
 	}
@@ -30,7 +36,10 @@ public class goalitigger : MonoBehaviour {
 	{
 		if (other.tag == "player")
 		{
-			anim.Play("goaloff");
+			if (anim != null)
+			{
+				anim.Play("goaloff");
+			}
 		}
 	}
 

@@ -5,6 +5,9 @@ public class GameData : MonoBehaviour {
 
 	public static GameData instance;
 
+	public int randX = 8;
+	public int randY = 8;
+	public mazeGT randMaze = new mazeGT();
 
 	public StepChar playerSC
 	{
@@ -20,8 +23,12 @@ public class GameData : MonoBehaviour {
 	}
 	
 	StepChar _playerSC;
+	
+	public GameObject wallPrefab;
+	public GameObject startPrefab;
+	public GameObject goalPrefab;
 
-
+	public bool UseRandMaze = true;
 	public int currentLevel = 1;
 	public int maxLevel = 4;
 	public int restartLevel = 2;
@@ -39,6 +46,7 @@ public class GameData : MonoBehaviour {
 	{
 		if (instance == null)
 		{
+			randMaze.owner = gameObject;
 			instance = this;
 			DontDestroyOnLoad(gameObject);
 		}
@@ -51,11 +59,17 @@ public class GameData : MonoBehaviour {
 	// Use this for initialization
 	void Start ()
 	{
+		LoadInitLevel();
+	}
+
+	public void LoadInitLevel()
+	{
 		if (currentLevel == 0)
 		{
 			GameData.instance.playerSC.CanCtrl = false;
 			LoadNextLevel();
 		}
+
 	}
 
 	// Update is called once per frame
@@ -75,8 +89,95 @@ public class GameData : MonoBehaviour {
 
 	public void LoadNextLevel()
 	{
-		StartCoroutine("LoadLevel");
+		if (UseRandMaze)
+		{
+			StartCoroutine("LoadLevelRand");
+		}
+		else
+		{
+			StartCoroutine("LoadLevel");
+		}
 	}
+
+	
+	IEnumerator LoadLevelRand()
+	{
+		currentLevelRoot = newLevelRoot;
+		currentLevel++;
+				
+		
+		int newlevelid = currentLevel;
+		string newlevelname = "Level" + newlevelid.ToString();
+
+		randMaze.GenMaze(randX, randY);
+
+		GameObject levelobjRoot = new GameObject(newlevelname);
+		
+		for (int i = 0; i < randMaze.y; i++)
+		{
+			for (int j = 0; j < randMaze.x; j++)
+			{
+				yield return null;
+				GameObject go = null;
+				if (randMaze.cells[j, i].isStart)
+				{
+					go = GameObject.Instantiate<GameObject>(startPrefab);
+					go.name = "start";
+				}
+				else if (randMaze.cells[j, i].isEnd)
+				{
+					go = GameObject.Instantiate<GameObject>(goalPrefab);
+				}
+				else if (randMaze.cells[j, i].celltype == mazeGTCell.CELLTYPE.path)
+				{
+				}
+				else
+				{
+					go = GameObject.Instantiate<GameObject>(wallPrefab);
+				}
+				
+				if (go != null)
+				{					
+					go.transform.position = new Vector3(j, 0, i);
+					go.transform.parent = levelobjRoot.transform;
+				}
+			}
+		}
+		yield return null;
+
+
+		
+		newLevelRoot =  GameObject.Find(newlevelname);
+		newLevelStart = GameObject.Find(newlevelname+"/start");
+
+
+
+
+
+		Vector3 levelpos = playerSC.gameObject.transform.position - newLevelStart.transform.position;
+		levelpos.y = newLevelRoot.transform.position.y;
+		levelpos.x += newLevelRoot.transform.position.x;
+		levelpos.z += newLevelRoot.transform.position.z;
+		
+		newLevelRoot.transform.position = levelpos;	
+		
+		if (currentLevel == 1)
+		{
+			arcGameSoundPlayer.instance.PlayFX(5);
+		}
+		else
+		{
+			arcGameSoundPlayer.instance.PlayFX(2);
+		}
+		
+		if (currentLevelRoot != null)
+		{
+			StartCoroutine("HideCurrentLevel");
+		}
+		StartCoroutine("ShowNewLevel");
+		
+	}
+
 
 
 	IEnumerator LoadLevel()
@@ -187,7 +288,8 @@ public class GameData : MonoBehaviour {
 	{
 		currentLevel = 0;
 		Application.LoadLevel("level0");
-		LoadNextLevel();
+
+		//LoadNextLevel();
 		foods = defaultFoods;
 		GameData.instance.playerSC.CanCtrl = false;
 

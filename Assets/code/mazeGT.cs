@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
-
+[Serializable]
 public class mazeGTCell
 {
 	public enum CELLTYPE
@@ -29,19 +30,25 @@ public class mazeGTCell
 	public int tempRandValue = 0;
 }
 
+[Serializable]
 public class mazeGTChoseWay
 {
 	public mazeGTCell.NEBERTYPE nebertype;
 	public int randvalue;
 	
 }
-public class mazeGT : MonoBehaviour
+
+[Serializable]
+public class mazeGT
 {
 	public TextMesh debugText;
-
+	
+	public GameObject owner;
+	/*
 	public GameObject wallPrefab;
 	public GameObject startPrefab;
 	public GameObject goalPrefab;
+	*/
 	//選路的方式.
 	public enum CHOSEWAYTYPE
 	{
@@ -86,8 +93,10 @@ public class mazeGT : MonoBehaviour
 	
 	}
 
-	void GenMaze(int x, int y)
+	public void GenMaze(int sizex, int sizey)
 	{
+		x = sizex;
+		y = sizey;
 		if (cells != null)
 		{
 			System.Array.Clear(cells, 0, cells.Length);
@@ -117,8 +126,8 @@ public class mazeGT : MonoBehaviour
 			xkeep = 1;
 			ykeep = 1;
 		}
-		int startx = Random.Range(0 + xkeep, x - xkeep);
-		int starty = Random.Range(0 + ykeep, y - ykeep);
+		int startx = UnityEngine.Random.Range(0 + xkeep, x - xkeep);
+		int starty = UnityEngine.Random.Range(0 + ykeep, y - ykeep);
 
 		//step1.
 		mazeGTCell startcell = cells[startx, starty];
@@ -264,7 +273,7 @@ public class mazeGT : MonoBehaviour
 	{
 		if (choseWayType == CHOSEWAYTYPE.Rand)
 		{
-			int randp = Random.Range (0, nb.Count);
+			int randp = UnityEngine.Random.Range (0, nb.Count);
 			mazeGTCell rc = nb[randp];
 			pathRec.Push(rc);
 		}
@@ -276,7 +285,7 @@ public class mazeGT : MonoBehaviour
 			{
 				total += mc.tempRandValue;
 			}
-			int randp = Random.Range(0, total);
+			int randp = UnityEngine.Random.Range(0, total);
 			//算出落在那.
 			int range = 0;
 			foreach (mazeGTCell mc in nb)
@@ -329,7 +338,7 @@ public class mazeGT : MonoBehaviour
 		//InstanceMaze();
 
 	}
-
+	/*
 	void InstanceMaze()
 	{		
 		for (int i = 0; i < y; i++)
@@ -356,7 +365,7 @@ public class mazeGT : MonoBehaviour
 				if (go != null)
 				{					
 					go.transform.position = new Vector3(j, 0, i);
-					go.transform.parent = gameObject.transform;
+					go.transform.parent = owner.gameObject.transform;
 				}
 			}
 		}
@@ -380,11 +389,11 @@ public class mazeGT : MonoBehaviour
 		}
 		if (GUILayout.Button ("disable shadow"))
 		{
-			Light[] ls = FindObjectsOfType(typeof(Light)) as Light[];
+			Light[] ls = GameObject.FindObjectsOfType(typeof(Light)) as Light[];
 			foreach (Light l in ls) {
 				l.shadows = LightShadows.None;
 			}
 		}
 	}
-
+*/
 }
