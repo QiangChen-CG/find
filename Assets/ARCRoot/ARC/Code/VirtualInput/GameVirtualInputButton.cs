@@ -18,6 +18,7 @@ public class GameVirtualInputButton : GameVirtualInputBase
 	public Camera tartegCamera;
 	public CircleCollider2D circleC2d;
 	public SpriteRenderer btnSprite;
+	public bool moveCollider = false;
 	//GUISettings.
 	public float minLongUpTime = 0.1f;
 	public float colliderTouchScale = 3.0f;
@@ -121,8 +122,10 @@ public class GameVirtualInputButton : GameVirtualInputBase
 
 					
 					//collider 跟著移動.
-					circleC2d.gameObject.transform.position = new Vector3(touchWorldPos.x, touchWorldPos.y, circleC2d.gameObject.transform.position.z);
-										
+					if (moveCollider)
+					{
+						circleC2d.gameObject.transform.position = new Vector3(touchWorldPos.x, touchWorldPos.y, circleC2d.gameObject.transform.position.z);
+					}				
 				}
 				
 				

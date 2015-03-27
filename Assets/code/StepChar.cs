@@ -8,6 +8,14 @@ public class StepChar : MonoBehaviour {
 		idle,
 		move
 	}
+	
+	public enum MoveDir
+	{
+		Forward,
+		Back,
+		Left,
+		Right
+	}
 
 	public bool CanCtrl = true;
 
@@ -24,63 +32,122 @@ public class StepChar : MonoBehaviour {
 	public Vector3 movedir = Vector3.zero;
 	public Vector3 moveToPos = Vector3.zero;
 	public Vector3 moveStartPos = Vector3.zero;
+	public float hitStairHeight = 0;
 
 	public bool touchBegin = false;
 	public Vector2 beginTouchPos = Vector2.zero;
-	public float rayYfix = 0;
+	public float rayLength = 3;
+	public float rayHeight = 2;
 
 	bool canWalkForward = true;
 	bool canWalkBack = true;
 	bool canWalkLeft = true;
 	bool canWalkRight = true;
 
+
+	void OnEnable()
+	{
+		GameVirtualInput.instance.RegButtonInputEvent(0, GameVirtualInput.ButtonInputEventType.UP, VILeft);
+		GameVirtualInput.instance.RegButtonInputEvent(1, GameVirtualInput.ButtonInputEventType.UP, VIForward);
+		GameVirtualInput.instance.RegButtonInputEvent(2, GameVirtualInput.ButtonInputEventType.UP, VIBack);
+		GameVirtualInput.instance.RegButtonInputEvent(3, GameVirtualInput.ButtonInputEventType.UP, VIRight);
+
+	}
+	
+	void OnDisable()
+	{
+		GameVirtualInput.instance.UnRegButtonInputEvent(0, GameVirtualInput.ButtonInputEventType.UP, VILeft);
+		GameVirtualInput.instance.UnRegButtonInputEvent(1, GameVirtualInput.ButtonInputEventType.UP, VIForward);
+		GameVirtualInput.instance.UnRegButtonInputEvent(2, GameVirtualInput.ButtonInputEventType.UP, VIBack);
+		GameVirtualInput.instance.UnRegButtonInputEvent(3, GameVirtualInput.ButtonInputEventType.UP, VIRight);
+		
+	}
+	
+	void VILeft(Vector2 move)
+	{
+		if (CanCtrl)
+		{
+			MoveTest(MoveDir.Left, true);
+		}
+	}
+	void VIRight(Vector2 move)
+	{
+		if (CanCtrl)
+		{
+			MoveTest(MoveDir.Right, true);
+		}
+	}
+	void VIBack(Vector2 move)
+	{
+		if (CanCtrl)
+		{
+			MoveTest(MoveDir.Back, true);
+		}
+	}
+	void VIForward(Vector2 move)
+	{
+		if (CanCtrl)
+		{
+			MoveTest(MoveDir.Forward, true);
+		}
+	}
 	// Use this for initialization
 	void Start ()
 	{
 		moveToPos = transform.position;
 	}
 
+	bool WayRayTest(Vector3 pos, Vector3 dir, bool getHitHeight = false)
+	{		
+		RaycastHit rhf = new RaycastHit();
+		/*
+		Debug.DrawLine(pos, pos+(dir*1.3f));
+		if (Physics.Raycast(pos, dir, out rhf, 1.3f))
+		{
+			if (rhf.collider != null && rhf.collider.gameObject.tag == "wall")
+			{
+				return false;
+			}
+		}
+		*/
+		if (getHitHeight)
+		{
+			hitStairHeight = 0;
+		}
+
+		Vector3 raystart = pos + (dir*setp);
+		raystart.y += rayHeight;
+		Vector3 rayend = raystart;
+		rayend.y -= rayLength;
+		
+		Debug.DrawLine(raystart, rayend, Color.yellow);
+		if (Physics.Raycast(raystart, -Vector3.up, out rhf, rayLength))
+		{
+			//wall.
+			if (rhf.collider != null && rhf.collider.gameObject.tag == "wall")
+			{
+				return false;
+			}
+
+			//樓梯.
+			if (getHitHeight && rhf.collider != null && rhf.collider.gameObject.tag == "stair")
+			{
+				hitStairHeight = rhf.point.y - moveToPos.y;
+			}
+
+		}
+		return true;
+	}
+
 	void FindWay()
 	{
-		canWalkForward = true;
-		canWalkBack = true;
-		canWalkLeft = true;
-		canWalkRight = true;
+		//Vector3 raystart = transform.position;
+		//raystart.y += rayYfix;
+		//canWalkForward = WayRayTest(raystart, transform.forward);
+		//canWalkBack = WayRayTest(raystart, -transform.forward);
+		//canWalkLeft = WayRayTest(raystart, -transform.right);
+		//canWalkRight = WayRayTest(raystart, transform.right);
 
-		Vector3 raystart = transform.position;
-		raystart.y += rayYfix;
-
-		RaycastHit rhf = new RaycastHit();
-		if (Physics.Raycast(raystart, transform.forward, out rhf, 1.3f))
-		{
-			if (rhf.collider != null && rhf.collider.gameObject.tag == "wall")
-			{
-				canWalkForward = false;
-			}
-		}
-
-		if (Physics.Raycast(raystart, -transform.forward, out rhf, 1.3f))
-		{
-			if (rhf.collider != null && rhf.collider.gameObject.tag == "wall")
-			{
-				canWalkBack = false;
-			}
-		}
-		
-		if (Physics.Raycast(raystart, transform.right, out rhf, 1.3f))
-		{
-			if (rhf.collider != null && rhf.collider.gameObject.tag == "wall")
-			{
-				canWalkRight = false;
-			}
-		}
-		if (Physics.Raycast(raystart, -transform.right, out rhf, 1.3f))
-		{
-			if (rhf.collider != null && rhf.collider.gameObject.tag == "wall")
-			{
-				canWalkLeft = false;
-			}
-		}
 	}
 
 	void MoveValue(Vector3 moveval)
@@ -90,6 +157,7 @@ public class StepChar : MonoBehaviour {
 
 		movedir = moveval;
 		moveToPos = transform.position + movedir * setp;
+		moveToPos.y += hitStairHeight;
 		moveStartPos = transform.position;
 		renderobject.transform.LookAt(renderobject.transform.position + movedir);
 		anim.Play("move", 0, 0);
@@ -118,21 +186,21 @@ public class StepChar : MonoBehaviour {
 	{
 		if (state == State.idle)
 		{
-			if (Input.GetKeyDown(KeyCode.W) && canWalkForward)
+			if (Input.GetKeyDown(KeyCode.W))
 			{
-				MoveValue(transform.forward);
+				MoveTest(MoveDir.Forward, true);
 			}
-			else if (Input.GetKeyDown(KeyCode.S) && canWalkBack)
+			else if (Input.GetKeyDown(KeyCode.S))
 			{
-				MoveValue(-transform.forward);
+				MoveTest(MoveDir.Back, true);
 			}
-			else if (Input.GetKeyDown(KeyCode.A) && canWalkLeft)
-			{			
-				MoveValue(-transform.right);
-			}
-			else if (Input.GetKeyDown(KeyCode.D)&& canWalkRight)
+			else if (Input.GetKeyDown(KeyCode.A))
 			{
-				MoveValue(transform.right);
+				MoveTest(MoveDir.Left, true);
+			}
+			else if (Input.GetKeyDown(KeyCode.D))
+			{
+				MoveTest(MoveDir.Right, true);
 			}
 		}
 	}
@@ -243,14 +311,107 @@ public class StepChar : MonoBehaviour {
 							MoveValue (-transform.forward);
 						}
 						
-					}
-					
-				}
-				
+					}					
+				}				
 			}
 		}
 	}
-	
+
+	bool CanNextWalkTo(Vector3 dir, Vector3 dirNext)
+	{
+		Vector3 raystart = transform.position;
+		raystart += dir;
+		raystart.y += rayHeight;
+
+		return WayRayTest(raystart, dirNext);
+	}
+
+	void MoveTest(MoveDir dir, bool smart)
+	{
+		Vector3 raystart = transform.position;
+		raystart.y += rayHeight;
+		switch (dir)
+		{				
+			case MoveDir.Forward:
+			{
+				if (WayRayTest(raystart, transform.forward, true))
+				{
+					MoveValue(transform.forward);
+				}
+				else if (smart)
+				{
+					if (WayRayTest(raystart, transform.right, true) && CanNextWalkTo(transform.right, transform.forward))
+					{
+						MoveValue(transform.right);
+					}
+					else if (WayRayTest(raystart, -transform.right, true) && CanNextWalkTo(-transform.right, transform.forward))
+					{			
+						MoveValue(-transform.right);
+					}
+				}
+				break;
+
+			}
+			case MoveDir.Back:
+			{					
+				if (WayRayTest(raystart, -transform.forward, true))
+				{
+					MoveValue(-transform.forward);
+				}
+				else if (smart)
+				{
+					if (WayRayTest(raystart, -transform.right, true) && CanNextWalkTo(-transform.right, -transform.forward))
+					{			
+						MoveValue(-transform.right);
+					}
+					else if (WayRayTest(raystart, transform.right, true) && CanNextWalkTo(transform.right, -transform.forward))
+					{
+						MoveValue(transform.right);
+					}	
+				}
+				break;
+			}
+			case MoveDir.Left:
+			{
+				if (WayRayTest(raystart, -transform.right, true))
+				{			
+					MoveValue(-transform.right);
+				}
+				else if (smart)
+				{
+					if (WayRayTest(raystart, -transform.forward, true) && CanNextWalkTo(-transform.forward, -transform.right))
+					{			
+						MoveValue(-transform.forward);
+					}
+					else if (WayRayTest(raystart, transform.forward, true) && CanNextWalkTo(transform.forward, -transform.right))
+					{
+						MoveValue(transform.forward);
+					}
+				}
+				break;
+			}
+			case MoveDir.Right:
+			{
+				if (WayRayTest(raystart, transform.right, true))
+				{
+					MoveValue(transform.right);
+				}
+				else if (smart)
+				{
+					if (WayRayTest(raystart, transform.forward, true) && CanNextWalkTo(transform.forward, transform.right))
+					{
+						MoveValue(transform.forward);
+					}							
+					else if (WayRayTest(raystart, -transform.forward, true) && CanNextWalkTo(-transform.forward, transform.right))
+					{
+						MoveValue(-transform.forward);
+					}
+				}
+				break;
+			}
+		}
+	}
+
 	void HandleTouchInputSmart()
 	{
 		Vector2 screenCharPos = Camera.main.WorldToScreenPoint(transform.position);
@@ -292,11 +453,11 @@ public class StepChar : MonoBehaviour {
 					{
 						MoveValue(transform.forward);
 					}
-					else if (canWalkRight)
+					else if (canWalkRight && CanNextWalkTo(transform.right, transform.forward))
 					{
 						MoveValue(transform.right);
 					}
-					else if (canWalkLeft)
+					else if (canWalkLeft && CanNextWalkTo(-transform.right, transform.forward))
 					{			
 						MoveValue(-transform.right);
 					}
@@ -308,11 +469,11 @@ public class StepChar : MonoBehaviour {
 					{			
 						MoveValue(-transform.right);
 					}
-					else if (canWalkBack)
+					else if (canWalkBack && CanNextWalkTo(-transform.forward, -transform.right))
 					{			
 						MoveValue(-transform.forward);
 					}
-					else if (canWalkForward)
+					else if (canWalkForward && CanNextWalkTo(transform.forward, -transform.right))
 					{
 						MoveValue(transform.forward);
 					}
@@ -329,35 +490,32 @@ public class StepChar : MonoBehaviour {
 					{
 						MoveValue(transform.right);
 					}
-					else if (canWalkForward)
+					else if (canWalkForward && CanNextWalkTo(transform.forward, transform.right))
 					{
 						MoveValue(transform.forward);
 					}							
-					else if (canWalkBack)
+					else if (canWalkBack && CanNextWalkTo(-transform.forward, transform.right))
 					{
 						MoveValue(-transform.forward);
 					}		
 				}
 				else
 				{
-					//左.						
+					//下.						
 					if (canWalkBack)
 					{
 						MoveValue(-transform.forward);
 					}
-					else if (canWalkLeft)
+					else if (canWalkLeft && CanNextWalkTo(-transform.right, -transform.forward))
 					{			
 						MoveValue(-transform.right);
 					}
-					else if (canWalkRight)
+					else if (canWalkRight && CanNextWalkTo(transform.right, -transform.forward))
 					{
 						MoveValue(transform.right);
-					}
-					
-				}
-				
-			}
-			
+					}					
+				}				
+			}			
 		}
 	}
 
@@ -449,10 +607,10 @@ public class StepChar : MonoBehaviour {
 		if (CanCtrl)
 		{
 			float deltatime = arcGamePlayTimeMgr.GetDeltaTime("player");
-			FindWay();
+			//FindWay();
 			//HandleTouchInput();
 			//HandleToucehDragInput();
-			HandleTouchInputSmart();
+			//HandleTouchInputSmart();
 			HandleKeyCtrl(deltatime);
 		}
 
