@@ -16,6 +16,7 @@ public class ShadowChar : MonoBehaviour {
 		Right
 	}
 	
+	public bool CanCtrl = true;
 	
 	public State state = State.idle;
 	public float tweenspeed = 1;
