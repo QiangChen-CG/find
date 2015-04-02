@@ -13,4 +13,13 @@ public class loadleveltigger : MonoBehaviour {
 	void Update () {
 	
 	}
+
+	void OnGUI()
+	{
+		arcUtility.GUIMatrixAutoScale(300,400);
+		if (GUILayout.Button("next level"))
+		{
+			GameData.instance.LoadNextLevel();
+		}
+	}
 }
